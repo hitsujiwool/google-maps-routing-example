@@ -1649,7 +1649,9 @@ function isUndefined(arg) {
 }).call(this);
 
 },{}],3:[function(require,module,exports){
-var detectRoute, service;
+var detectRoute, google, service;
+
+google = (window.google);
 
 service = new google.maps.DirectionsService();
 
@@ -1657,16 +1659,17 @@ detectRoute = function(from, to, cb) {
   return service.route({
     origin: from,
     destination: to,
+    unitSystem: google.maps.UnitSystem.METRIC,
     travelMode: google.maps.DirectionsTravelMode.WALKING
   }, function(result, status) {
-    return cb(null, result.routes[0].overview_path);
+    return cb(null, result.routes[0]);
   });
 };
 
 module.exports = {
   snap: function(latLng, cb) {
     return detectRoute(latLng, latLng, function(err, route) {
-      return cb(err, route[0]);
+      return cb(err, route.overview_path[0]);
     });
   },
   route: function(from, to, cb) {
@@ -1677,6 +1680,8 @@ module.exports = {
 };
 
 
+},{}],"route-editor":[function(require,module,exports){
+module.exports=require('L7xQha');
 },{}],"L7xQha":[function(require,module,exports){
 var Marker, Polyline, Trail;
 
@@ -1691,15 +1696,16 @@ module.exports = function(map) {
   trail = new Trail();
   new Polyline(map, trail);
   new Marker(map, trail);
-  return google.maps.event.addListener(map, 'click', function(e) {
+  google.maps.event.addListener(map, 'click', function(e) {
     return trail.add(e.latLng);
   });
+  return {
+    trail: trail
+  };
 };
 
 
-},{"./marker":6,"./polyline":8,"./trail":9}],"route-editor":[function(require,module,exports){
-module.exports=require('L7xQha');
-},{}],6:[function(require,module,exports){
+},{"./marker":6,"./polyline":8,"./trail":9}],6:[function(require,module,exports){
 var Marker, directions;
 
 directions = require('./directions');
@@ -1764,9 +1770,9 @@ module.exports = Node = (function() {
 
   Node.prototype.updatePathToPrev = function(cb) {
     if (this.prev) {
-      return directions.route(this.latLng, this.prev.latLng, (function(_this) {
+      return directions.route(this.prev.latLng, this.latLng, (function(_this) {
         return function(err, route) {
-          _this.pathToPrev = route;
+          _this.routeFromPrev = route;
           return cb();
         };
       })(this));
@@ -1789,15 +1795,14 @@ _ = require('underscore');
 
 module.exports = Polyline = (function() {
   function Polyline(map, trail, opts) {
-    var line, route, service;
+    var line, path;
     this.map = map;
     this.trail = trail;
     if (opts == null) {
       opts = {};
     }
     this.snapped = opts.snapped;
-    service = new google.maps.DirectionsService();
-    route = {};
+    path = {};
     line = new google.maps.Polyline({
       map: map,
       strokeColor: '#FF0000',
@@ -1805,15 +1810,15 @@ module.exports = Polyline = (function() {
       strokeWeight: 5
     });
     trail.on('add', function(node) {
-      route[node.id] = node.pathToPrev.reverse();
-      return line.setPath(_.compose(_.flatten, _.values)(route));
+      path[node.id] = node.routeFromPrev.overview_path;
+      return line.setPath(_.compose(_.flatten, _.values)(path));
     });
     trail.on('update', function(node) {
-      if (!node.pathToPrev) {
+      if (node.isInitial) {
         return;
       }
-      route[node.id] = node.pathToPrev.reverse();
-      return line.setPath(_.compose(_.flatten, _.values)(route));
+      path[node.id] = node.routeFromPrev.overview_path;
+      return line.setPath(_.compose(_.flatten, _.values)(path));
     });
   }
 
@@ -1850,9 +1855,11 @@ module.exports = Trail = (function(_super) {
     if (this.nodes.length === 0) {
       directions.snap(latLng, (function(_this) {
         return function(err, snapped) {
-          _this.startNode = new Node(snapped);
-          _this.nodes.push(_this.startNode);
-          return _this.emit('start', _this.startNode);
+          var node;
+          node = new Node(snapped);
+          node.isInitial = true;
+          _this.nodes.push(node);
+          return _this.emit('start', node);
         };
       })(this));
       return;
@@ -1861,12 +1868,12 @@ module.exports = Trail = (function(_super) {
     prevNode = this.nodes[len - 1];
     return directions.route(prevNode.latLng, latLng, (function(_this) {
       return function(err, route) {
-        var node;
-        node = new Node(route[route.length - 1]);
-        prevNode.pathToNext = route;
-        prevNode.next = node;
-        node.pathToPrev = route.reverse();
+        var node, path;
+        path = route.overview_path;
+        node = new Node(path[path.length - 1]);
+        node.routeFromPrev = route;
         node.prev = prevNode;
+        prevNode.next = node;
         _this.nodes.push(node);
         return _this.emit('add', node);
       };
@@ -1893,7 +1900,15 @@ module.exports = Trail = (function(_super) {
     })(this));
   };
 
-  Trail.prototype.getNeighborhood = function(latLng) {};
+  Trail.prototype.calcDistance = function() {
+    return this.nodes.slice(1).reduce(function(sum, node) {
+      var route;
+      route = node.routeFromPrev;
+      return sum + route.legs.reduce((function(sum, leg) {
+        return sum + leg.distance.value;
+      }), 0);
+    }, 0);
+  };
 
   return Trail;
 

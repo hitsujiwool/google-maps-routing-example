@@ -13,18 +13,19 @@ module.exports = class Trail extends EventEmitter
   add: (latLng, cb) ->
     if @nodes.length is 0
       directions.snap latLng, (err, snapped) =>
-        @startNode = new Node(snapped)
-        @nodes.push @startNode
-        this.emit 'start', @startNode
+        node = new Node(snapped)
+        node.isInitial = true
+        @nodes.push node
+        this.emit 'start', node
       return
     len = @nodes.length
     prevNode = @nodes[len - 1]
     directions.route prevNode.latLng, latLng, (err, route) =>
-      node = new Node(route[route.length - 1])
-      prevNode.pathToNext = route
-      prevNode.next = node
-      node.pathToPrev = route.reverse()
+      path = route.overview_path
+      node = new Node(path[path.length - 1])
+      node.routeFromPrev = route
       node.prev = prevNode
+      prevNode.next = node
       @nodes.push node
       this.emit 'add', node
 
@@ -38,5 +39,9 @@ module.exports = class Trail extends EventEmitter
       if node.next
         node.next.updatePathToPrev =>
           this.emit 'update', node.next
-
-  getNeighborhood: (latLng) ->
+                    
+  calcDistance: ->
+    @nodes.slice(1).reduce (sum, node) ->
+      route = node.routeFromPrev
+      sum + route.legs.reduce(((sum, leg) -> sum + leg.distance.value), 0)
+    , 0

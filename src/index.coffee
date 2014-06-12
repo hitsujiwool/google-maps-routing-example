@@ -8,3 +8,4 @@ module.exports = (map) ->
   new Marker map, trail      
   google.maps.event.addListener map, 'click', (e) ->
     trail.add e.latLng
+  { trail: trail }
