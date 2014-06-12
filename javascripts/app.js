@@ -24,14 +24,18 @@
   function pad(n, d) {
     var str = n.toString();
     var index = n.toString().indexOf('.');
-    if (index > 0) {
-      if (str.slice(index).length < d) {
-        for (var i = 0, len = str.slice(index).length; i < d - len; i++) {
-          str += '0';
-        }
+    var len;
+    if (index < 0) {
+      str += '.';
+      index = str.length - 1;
+      console.log(index);
+    }
+    len = str.slice(index + 1).length;
+    if (len < d) {
+      for (var i = 0; i < d - len; i++) {
+        str += '0';
       }
     }
     return str;
   }
-
 })();
