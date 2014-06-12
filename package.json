@@ -1,0 +1,33 @@
+{
+  "name": "google-maps-routing-example",
+  "version": "0.0.1",
+  "description": "routing editor powered by Google Maps",
+  "private": true,
+  "scripts": {
+    "test": "mocha",
+    "build": "browserify -r ./src/index.coffee:route-editor -t coffeeify -t browserify-shim -o javascripts/route_editor.js --extension .coffee",
+    "watch": "watchify -r ./src/index.coffee:route-editor -t coffeeify -t browserify-shim -o javascripts/route_editor.js --extension .coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:hitsujiwool/google-maps-routing-example"
+  },
+  "author": "Ryo Murayama <utatanenohibi@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hitsujiwool/google-maps-routing-example/issues"
+  },
+  "homepage": "https://github.com/hitsujiwool/google-maps-routing-example",
+  "dependencies": {
+    "underscore": "~1.6.0"
+  },
+  "devDependencies": {
+    "browserify": "~4.1.9",
+    "browserify-shim": "~3.5.0",
+    "coffeeify": "~0.6.0",
+    "watchify": "~0.10.2"
+  },
+  "browserify-shim": {
+    "google": "global:google"
+  }
+}
