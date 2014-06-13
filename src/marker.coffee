@@ -3,19 +3,23 @@ directions = require './directions'
 
 module.exports = class Marker
   constructor: (@map, @trail) ->
-    @markers = []
+    @markers = {}
 
     @trail.on 'start', (node) =>
       this.add node
       
     @trail.on 'add', (node) =>
-      this.add node    
+      this.add node
+
+    @trail.on 'remove', (node) =>
+      @markers[node.id].setMap null
 
    add: (node) ->
     marker = new google.maps.Marker
       position: node.latLng
       map: @map
       draggable: true
+    @markers[node.id] = marker
           
     google.maps.event.addListener marker, 'dragstart', (e) =>
       @draggingNode = @trail.nodeAt(e.latLng)

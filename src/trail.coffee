@@ -6,7 +6,7 @@ directions = require './directions'
 Node = require './node'
 
 module.exports = class Trail extends EventEmitter
-  constructor: ->
+  constructor: (@bido) ->
     @nodes = []
     @service = new google.maps.DirectionsService()
 
@@ -15,8 +15,14 @@ module.exports = class Trail extends EventEmitter
       directions.snap latLng, (err, snapped) =>
         node = new Node(snapped)
         node.isInitial = true
-        @nodes.push node
-        this.emit 'start', node
+        do @bido (=>
+          @nodes.push node        
+          this.emit 'start', node
+        ),
+        (=>
+          @nodes = _.without @nodes, node          
+          this.emit 'remove', node
+        )
       return
     len = @nodes.length
     prevNode = @nodes[len - 1]
@@ -26,14 +32,20 @@ module.exports = class Trail extends EventEmitter
       node.routeFromPrev = route
       node.prev = prevNode
       prevNode.next = node
-      @nodes.push node
-      this.emit 'add', node
+      do @bido (=>
+        @nodes.push node     
+        this.emit 'add', node
+      ),
+      (=>
+        @nodes = _.without @nodes, node
+        this.emit 'remove', node
+      )
 
   nodeAt: (latLng) ->
     _.find @nodes, (node) -> node.latLng.equals(latLng)
 
   replace: (node, latLng) ->
-    node.latLng = latLng  
+    node.latLng = latLng        
     node.updatePathToPrev =>
       this.emit 'update', node
       if node.next

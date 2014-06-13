@@ -19,3 +19,9 @@ module.exports = class Polyline
       return if node.isInitial
       path[node.id] = node.routeFromPrev.overview_path
       line.setPath _.compose(_.flatten, _.values)(path)
+
+    trail.on 'remove', (node) =>
+      return if node.isInitial
+      delete path[node.id]
+      line.setPath _.compose(_.flatten, _.values)(path)
+              

@@ -1649,6 +1649,53 @@ function isUndefined(arg) {
 }).call(this);
 
 },{}],3:[function(require,module,exports){
+
+module.exports = function() {
+  var undos = [];
+  var redos = [];
+
+  function f(redo, undo) {
+    undos.push({ redo: redo, undo: undo });    
+    return function() {
+      redos = [];
+      redo();
+      f.onStack && f.onStack();
+    };
+  };
+
+  f.hasUndo = function() {
+    return undos.length > 0;
+  };
+
+  f.undo = function() {
+    console.log('undo');
+    var command = undos.pop();
+    command.undo();
+    redos.push(command);
+    f.onUndo && f.onUndo();
+  };
+
+  f.hasRedo = function() {
+    return redos.length > 0;
+  };
+
+  f.redo = function() {
+    console.log('redo');
+    var command = redos.pop();
+    command.redo();
+    undos.push(command);
+    f.onRedo && f.onRedo();
+  };
+
+  f.clear = function() {
+    undos = [];
+    redos = [];
+  };
+
+  return f;
+};
+
+},{}],4:[function(require,module,exports){
 var detectRoute, google, service;
 
 google = (window.google);
@@ -1680,10 +1727,8 @@ module.exports = {
 };
 
 
-},{}],"route-editor":[function(require,module,exports){
-module.exports=require('L7xQha');
 },{}],"L7xQha":[function(require,module,exports){
-var Marker, Polyline, Trail;
+var Marker, Polyline, Trail, bido;
 
 Trail = require('./trail');
 
@@ -1691,21 +1736,26 @@ Polyline = require('./polyline');
 
 Marker = require('./marker');
 
+bido = require('./bido')();
+
 module.exports = function(map) {
   var trail;
-  trail = new Trail();
+  trail = new Trail(bido);
   new Polyline(map, trail);
   new Marker(map, trail);
   google.maps.event.addListener(map, 'click', function(e) {
     return trail.add(e.latLng);
   });
   return {
-    trail: trail
+    trail: trail,
+    bido: bido
   };
 };
 
 
-},{"./marker":6,"./polyline":8,"./trail":9}],6:[function(require,module,exports){
+},{"./bido":3,"./marker":7,"./polyline":9,"./trail":10}],"route-editor":[function(require,module,exports){
+module.exports=require('L7xQha');
+},{}],7:[function(require,module,exports){
 var Marker, directions;
 
 directions = require('./directions');
@@ -1714,7 +1764,7 @@ module.exports = Marker = (function() {
   function Marker(map, trail) {
     this.map = map;
     this.trail = trail;
-    this.markers = [];
+    this.markers = {};
     this.trail.on('start', (function(_this) {
       return function(node) {
         return _this.add(node);
@@ -1723,6 +1773,11 @@ module.exports = Marker = (function() {
     this.trail.on('add', (function(_this) {
       return function(node) {
         return _this.add(node);
+      };
+    })(this));
+    this.trail.on('remove', (function(_this) {
+      return function(node) {
+        return _this.markers[node.id].setMap(null);
       };
     })(this));
   }
@@ -1734,6 +1789,7 @@ module.exports = Marker = (function() {
       map: this.map,
       draggable: true
     });
+    this.markers[node.id] = marker;
     google.maps.event.addListener(marker, 'dragstart', (function(_this) {
       return function(e) {
         return _this.draggingNode = _this.trail.nodeAt(e.latLng);
@@ -1755,7 +1811,7 @@ module.exports = Marker = (function() {
 })();
 
 
-},{"./directions":3}],7:[function(require,module,exports){
+},{"./directions":4}],8:[function(require,module,exports){
 var Node, directions, _;
 
 _ = require('underscore');
@@ -1786,7 +1842,7 @@ module.exports = Node = (function() {
 })();
 
 
-},{"./directions":3,"underscore":2}],8:[function(require,module,exports){
+},{"./directions":4,"underscore":2}],9:[function(require,module,exports){
 var Polyline, google, _;
 
 google = (window.google);
@@ -1820,6 +1876,15 @@ module.exports = Polyline = (function() {
       path[node.id] = node.routeFromPrev.overview_path;
       return line.setPath(_.compose(_.flatten, _.values)(path));
     });
+    trail.on('remove', (function(_this) {
+      return function(node) {
+        if (node.isInitial) {
+          return;
+        }
+        delete path[node.id];
+        return line.setPath(_.compose(_.flatten, _.values)(path));
+      };
+    })(this));
   }
 
   return Polyline;
@@ -1827,7 +1892,7 @@ module.exports = Polyline = (function() {
 })();
 
 
-},{"underscore":2}],9:[function(require,module,exports){
+},{"underscore":2}],10:[function(require,module,exports){
 var EventEmitter, Node, Trail, directions, google, _,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1845,7 +1910,8 @@ Node = require('./node');
 module.exports = Trail = (function(_super) {
   __extends(Trail, _super);
 
-  function Trail() {
+  function Trail(bido) {
+    this.bido = bido;
     this.nodes = [];
     this.service = new google.maps.DirectionsService();
   }
@@ -1858,8 +1924,13 @@ module.exports = Trail = (function(_super) {
           var node;
           node = new Node(snapped);
           node.isInitial = true;
-          _this.nodes.push(node);
-          return _this.emit('start', node);
+          return _this.bido((function() {
+            _this.nodes.push(node);
+            return _this.emit('start', node);
+          }), (function() {
+            _this.nodes = _.without(_this.nodes, node);
+            return _this.emit('remove', node);
+          }))();
         };
       })(this));
       return;
@@ -1874,8 +1945,13 @@ module.exports = Trail = (function(_super) {
         node.routeFromPrev = route;
         node.prev = prevNode;
         prevNode.next = node;
-        _this.nodes.push(node);
-        return _this.emit('add', node);
+        return _this.bido((function() {
+          _this.nodes.push(node);
+          return _this.emit('add', node);
+        }), (function() {
+          _this.nodes = _.without(_this.nodes, node);
+          return _this.emit('remove', node);
+        }))();
       };
     })(this));
   };
@@ -1915,4 +1991,4 @@ module.exports = Trail = (function(_super) {
 })(EventEmitter);
 
 
-},{"./directions":3,"./node":7,"events":1,"underscore":2}]},{},[])
+},{"./directions":4,"./node":8,"events":1,"underscore":2}]},{},[])

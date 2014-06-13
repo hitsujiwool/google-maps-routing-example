@@ -6,6 +6,52 @@ html, body, #map {
   padding: 0px
 }
 
+#control {
+  position: fixed;
+  top: 50px;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  z-index: 9999;  
+}
+
+#control ul {
+  margin: 0;
+  padding: 5px;
+  list-style-type: none;
+}
+
+#control li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+#control li:first-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+#control a {
+  display: inline-block;
+  padding: 10px;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+#control a:hover {
+  opacity: 0.7
+}
+
+#control a:active {
+  opacity: 0.2;
+}
+
+#control .state-disabled {
+  opacity: 0.2;
+}
+
+#control .state-disabled:hover {
+  opacity: 0.2;
+}
+
 #console {
   padding: 10px;
   position: fixed;
