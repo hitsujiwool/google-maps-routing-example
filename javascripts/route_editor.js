@@ -1924,13 +1924,13 @@ module.exports = Trail = (function(_super) {
           var node;
           node = new Node(snapped);
           node.isInitial = true;
-          return _this.bido((function() {
+          return _this.bido(function() {
             _this.nodes.push(node);
             return _this.emit('start', node);
-          }), (function() {
+          }, function() {
             _this.nodes = _.without(_this.nodes, node);
             return _this.emit('remove', node);
-          }))();
+          })();
         };
       })(this));
       return;
@@ -1945,13 +1945,13 @@ module.exports = Trail = (function(_super) {
         node.routeFromPrev = route;
         node.prev = prevNode;
         prevNode.next = node;
-        return _this.bido((function() {
+        return _this.bido(function() {
           _this.nodes.push(node);
           return _this.emit('add', node);
-        }), (function() {
+        }, function() {
           _this.nodes = _.without(_this.nodes, node);
           return _this.emit('remove', node);
-        }))();
+        })();
       };
     })(this));
   };

@@ -15,14 +15,12 @@ module.exports = class Trail extends EventEmitter
       directions.snap latLng, (err, snapped) =>
         node = new Node(snapped)
         node.isInitial = true
-        do @bido (=>
+        do @bido =>
           @nodes.push node        
           this.emit 'start', node
-        ),
-        (=>
+        , =>
           @nodes = _.without @nodes, node          
           this.emit 'remove', node
-        )
       return
     len = @nodes.length
     prevNode = @nodes[len - 1]
@@ -32,14 +30,12 @@ module.exports = class Trail extends EventEmitter
       node.routeFromPrev = route
       node.prev = prevNode
       prevNode.next = node
-      do @bido (=>
+      do @bido =>
         @nodes.push node     
         this.emit 'add', node
-      ),
-      (=>
+      , =>
         @nodes = _.without @nodes, node
         this.emit 'remove', node
-      )
 
   nodeAt: (latLng) ->
     _.find @nodes, (node) -> node.latLng.equals(latLng)
