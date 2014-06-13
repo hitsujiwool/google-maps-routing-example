@@ -16,6 +16,9 @@
       })
       .on('update', function() {
         document.querySelector('.distance').innerText = formatAsKm(trail.calcDistance());
+      })
+      .on('remove', function() {
+        document.querySelector('.distance').innerText = formatAsKm(trail.calcDistance());
       });
     
     bido.onStack = function() {
