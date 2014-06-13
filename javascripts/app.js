@@ -59,7 +59,6 @@
     if (index < 0) {
       str += '.';
       index = str.length - 1;
-      console.log(index);
     }
     len = str.slice(index + 1).length;
     if (len < d) {

@@ -1668,7 +1668,6 @@ module.exports = function() {
   };
 
   f.undo = function() {
-    console.log('undo');
     var command = undos.pop();
     command.undo();
     redos.push(command);
@@ -1680,7 +1679,6 @@ module.exports = function() {
   };
 
   f.redo = function() {
-    console.log('redo');
     var command = redos.pop();
     command.redo();
     undos.push(command);
