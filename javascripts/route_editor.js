@@ -2499,6 +2499,8 @@ module.exports = Marker = (function() {
         return directions.snap(e.latLng).then(function(latLng) {
           _this.trail.replace(_this.draggingNode, latLng);
           return _this.draggingNode = null;
+        })["catch"](function(e) {
+          return console.error(e.message);
         });
       };
     })(this));
