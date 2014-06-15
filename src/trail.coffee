@@ -36,8 +36,15 @@ module.exports = class Trail extends EventEmitter
           @nodes.push node     
           this.emit 'add', node
         , =>
-          @nodes = _.without @nodes, node
+          this.remove node
+          console.log 'remove'
           this.emit 'remove', node
+
+  remove: (node) ->
+    if (prevNode = node.prev)
+      prevNode.next = null
+    @nodes = _.without @nodes, node
+    this
 
   nodeAt: (latLng) ->
     _.find @nodes, (node) -> node.latLng.equals(latLng)

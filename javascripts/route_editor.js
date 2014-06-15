@@ -2632,11 +2632,21 @@ module.exports = Trail = (function(_super) {
           _this.nodes.push(node);
           return _this.emit('add', node);
         }, function() {
-          _this.nodes = _.without(_this.nodes, node);
+          _this.remove(node);
+          console.log('remove');
           return _this.emit('remove', node);
         })();
       };
     })(this));
+  };
+
+  Trail.prototype.remove = function(node) {
+    var prevNode;
+    if ((prevNode = node.prev)) {
+      prevNode.next = null;
+    }
+    this.nodes = _.without(this.nodes, node);
+    return this;
   };
 
   Trail.prototype.nodeAt = function(latLng) {
