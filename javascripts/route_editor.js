@@ -2620,25 +2620,33 @@ module.exports = Trail = (function(_super) {
     this.service = new google.maps.DirectionsService();
   }
 
-  Trail.prototype.add = function(latLng, cb) {
-    var len, prevNode;
+  Trail.prototype.add = function(latLng) {
     if (this.nodes.length === 0) {
-      directions.snap(latLng).then((function(_this) {
-        return function(snapped) {
-          var node;
-          node = new Node(snapped);
-          node.isInitial = true;
-          return _this.bido(function() {
-            _this.nodes.push(node);
-            return _this.emit('start', node);
-          }, function() {
-            _this.nodes = _.without(_this.nodes, node);
-            return _this.emit('remove', node);
-          })();
-        };
-      })(this));
-      return;
+      return this.addInitial(latLng);
+    } else {
+      return this.addFollowing(latLng);
     }
+  };
+
+  Trail.prototype.addInitial = function(latLng) {
+    return directions.snap(latLng).then((function(_this) {
+      return function(snapped) {
+        var node;
+        node = new Node(snapped);
+        node.isInitial = true;
+        return _this.bido(function() {
+          _this.nodes.push(node);
+          return _this.emit('start', node);
+        }, function() {
+          _this.nodes = _.without(_this.nodes, node);
+          return _this.emit('remove', node);
+        })();
+      };
+    })(this));
+  };
+
+  Trail.prototype.addFollowing = function(latLng) {
+    var len, prevNode;
     len = this.nodes.length;
     prevNode = this.nodes[len - 1];
     return directions.route(prevNode.latLng, latLng).then((function(_this) {

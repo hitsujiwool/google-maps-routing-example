@@ -10,19 +10,25 @@ module.exports = class Trail extends EventEmitter
     @nodes = []
     @service = new google.maps.DirectionsService()
 
-  add: (latLng, cb) ->
+  add: (latLng) ->
     if @nodes.length is 0
-      directions.snap latLng
-        .then (snapped) =>
-          node = new Node(snapped)
-          node.isInitial = true
-          do @bido =>
-            @nodes.push node        
-            this.emit 'start', node
-          , =>
-            @nodes = _.without @nodes, node          
-            this.emit 'remove', node
-      return
+      this.addInitial(latLng)
+    else
+      this.addFollowing(latLng)
+
+  addInitial: (latLng) ->
+    directions.snap latLng
+      .then (snapped) =>
+        node = new Node(snapped)
+        node.isInitial = true
+        do @bido =>
+          @nodes.push node
+          this.emit 'start', node
+        , =>
+          @nodes = _.without @nodes, node
+          this.emit 'remove', node
+
+  addFollowing: (latLng) ->
     len = @nodes.length
     prevNode = @nodes[len - 1]
     directions.route prevNode.latLng, latLng
