@@ -3,8 +3,8 @@ function isPromise(obj) {
   return typeof obj.then === 'function';
 }
 
-function call(func, cb) {
-  var res = func.call();
+function call(func, ctx, cb) {
+  var res = func.call(null, ctx);
   if (isPromise(res)) {
     res.then(cb);
   } else {
@@ -18,12 +18,11 @@ module.exports = function() {
   var redos = [];
 
   f.onStack = f.onUndo = f.onRedo = function() {};
-
   function f(redo, undo) {
     return function() {
       redos = [];
-      call(redo, function() {
-        undos.push({ redo: redo, undo: undo });
+      call(redo, {}, function() {
+        undos.push({ redo: redo, undo: undo, ctx: {} });
         f.onStack && f.onStack();
       });
     };
@@ -35,7 +34,7 @@ module.exports = function() {
 
   f.undo = function() {
     var command = undos.pop();
-    call(command.undo, function() {
+    call(command.undo, command.ctx, function() {
       redos.push(command);
       f.onUndo && f.onUndo();
     });
@@ -47,7 +46,7 @@ module.exports = function() {
 
   f.redo = function() {
     var command = redos.pop();
-    call(command.redo, function() {
+    call(command.redo, command.ctx, function() {
       undos.push(command);
       f.onRedo && f.onRedo();
     });
