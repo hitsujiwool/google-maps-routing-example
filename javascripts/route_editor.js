@@ -2455,6 +2455,11 @@ module.exports = Marker = (function() {
         return _this.markers[node.id].setMap(null);
       };
     })(this));
+    this.trail.on('update', (function(_this) {
+      return function(node) {
+        return _this.markers[node.id].setPosition(node.latLng);
+      };
+    })(this));
   }
 
   Marker.prototype.add = function(node) {
@@ -2473,7 +2478,6 @@ module.exports = Marker = (function() {
     return google.maps.event.addListener(marker, 'dragend', (function(_this) {
       return function(e) {
         return directions.snap(e.latLng).then(function(latLng) {
-          marker.setPosition(latLng);
           _this.trail.replace(_this.draggingNode, latLng);
           return _this.draggingNode = null;
         });
@@ -2642,18 +2646,35 @@ module.exports = Trail = (function(_super) {
   };
 
   Trail.prototype.replace = function(node, latLng) {
-    var nodes;
-    node.latLng = latLng;
-    nodes = _.compact([node.prev && node, node.next]);
-    return Promise.all(nodes.map(function(n) {
-      return n.updatePathToPrev();
-    })).then((function(_this) {
+    var oldLatLng;
+    oldLatLng = new google.maps.LatLng(node.latLng.lat(), node.latLng.lng());
+    return this.bido((function(_this) {
       return function() {
-        return nodes.forEach(function(n) {
-          return _this.emit('update', n);
+        var nodes;
+        node.latLng = latLng;
+        nodes = _.compact([node, node.next]);
+        return Promise.all(nodes.map(function(n) {
+          return n.updatePathToPrev();
+        })).then(function() {
+          return nodes.forEach(function(n) {
+            return _this.emit('update', n);
+          });
         });
       };
-    })(this));
+    })(this), (function(_this) {
+      return function() {
+        var nodes;
+        node.latLng = oldLatLng;
+        nodes = _.compact([node, node.next]);
+        return Promise.all(nodes.map(function(n) {
+          return n.updatePathToPrev();
+        })).then(function() {
+          return nodes.forEach(function(n) {
+            return _this.emit('update', n);
+          });
+        });
+      };
+    })(this))();
   };
 
   Trail.prototype.calcDistance = function() {

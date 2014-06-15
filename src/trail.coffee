@@ -43,12 +43,21 @@ module.exports = class Trail extends EventEmitter
     _.find @nodes, (node) -> node.latLng.equals(latLng)
 
   replace: (node, latLng) ->
-    node.latLng = latLng
-    nodes = _.compact [node.prev && node, node.next]
-    Promise.all nodes.map (n) -> n.updatePathToPrev()
-      .then =>
-        nodes.forEach (n) =>
-          this.emit 'update', n
+    oldLatLng = new google.maps.LatLng node.latLng.lat(), node.latLng.lng()
+    do @bido =>
+      node.latLng = latLng
+      nodes = _.compact [node, node.next]
+      Promise.all nodes.map (n) -> n.updatePathToPrev()
+        .then =>
+          nodes.forEach (n) =>
+            this.emit 'update', n
+    , =>
+      node.latLng = oldLatLng
+      nodes = _.compact [node, node.next]
+      Promise.all nodes.map (n) -> n.updatePathToPrev()
+        .then =>
+          nodes.forEach (n) =>
+            this.emit 'update', n
 
   calcDistance: ->
     @nodes.slice(1).reduce (sum, node) ->

@@ -14,6 +14,9 @@ module.exports = class Marker
     @trail.on 'remove', (node) =>
       @markers[node.id].setMap null
 
+    @trail.on 'update', (node) =>
+      @markers[node.id].setPosition node.latLng
+
    add: (node) ->
     marker = new google.maps.Marker
       position: node.latLng
@@ -26,6 +29,5 @@ module.exports = class Marker
     google.maps.event.addListener marker, 'dragend', (e) =>
       directions.snap e.latLng
         .then (latLng) =>
-          marker.setPosition latLng
           @trail.replace @draggingNode, latLng
           @draggingNode = null
