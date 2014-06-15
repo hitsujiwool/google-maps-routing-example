@@ -40,10 +40,12 @@
 
     document.querySelector('.js-undo').addEventListener('click', function() {
       if (this.classList.contains('state-disabled')) return;
+      this.classList.add('state-disabled');
       bido.undo();
     });
     document.querySelector('.js-redo').addEventListener('click', function() {
       if (this.classList.contains('state-disabled')) return;
+      this.classList.add('state-disabled');
       bido.redo();
     });
   });
