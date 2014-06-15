@@ -1,21 +1,23 @@
 
 google = require 'google'
+Promise = require('es6-promise').Promise;
 service = new google.maps.DirectionsService()
 
 detectRoute = (from, to, cb) ->
-  service.route
-    origin: from
-    destination: to
-    unitSystem: google.maps.UnitSystem.METRIC
-    travelMode: google.maps.DirectionsTravelMode.WALKING
-  , (result, status) ->
-    cb null, result.routes[0]
+  new Promise (resolve, reject) ->
+    service.route
+      origin: from
+      destination: to
+      unitSystem: google.maps.UnitSystem.METRIC
+      travelMode: google.maps.DirectionsTravelMode.WALKING
+    , (result, status) ->
+      resolve(result.routes[0])
 
 module.exports =
-  snap: (latLng, cb) ->
-    detectRoute latLng, latLng, (err, route) ->
-      cb err, route.overview_path[0]
-      
-  route: (from, to, cb) ->
-    detectRoute from, to, (err, route) ->
-      cb err, route
+  snap: (latLng) ->
+    detectRoute latLng, latLng
+      .then (route) ->
+        route.overview_path[0]
+
+  route: (from, to) ->
+    detectRoute from, to
