@@ -2325,16 +2325,33 @@ exports.now = now;
 
 },{}],14:[function(require,module,exports){
 
+function isPromise(obj) {
+  return typeof obj.then === 'function';
+}
+
+function call(func, cb) {
+  var res = func.call();
+  if (isPromise(res)) {
+    res.then(cb);
+  } else {
+    cb && cb();
+  }
+  return res;
+}
+
 module.exports = function() {
   var undos = [];
   var redos = [];
 
+  f.onStack = f.onUndo = f.onRedo = function() {};
+
   function f(redo, undo) {
-    undos.push({ redo: redo, undo: undo });    
     return function() {
       redos = [];
-      redo();
-      f.onStack && f.onStack();
+      call(redo, function() {
+        undos.push({ redo: redo, undo: undo });
+        f.onStack && f.onStack();
+      });
     };
   };
 
@@ -2344,9 +2361,10 @@ module.exports = function() {
 
   f.undo = function() {
     var command = undos.pop();
-    command.undo();
-    redos.push(command);
-    f.onUndo && f.onUndo();
+    call(command.undo, function() {
+      redos.push(command);
+      f.onUndo && f.onUndo();
+    });
   };
 
   f.hasRedo = function() {
@@ -2355,9 +2373,10 @@ module.exports = function() {
 
   f.redo = function() {
     var command = redos.pop();
-    command.redo();
-    undos.push(command);
-    f.onRedo && f.onRedo();
+    call(command.redo, function() {
+      undos.push(command);
+      f.onRedo && f.onRedo();
+    });
   };
 
   f.clear = function() {
