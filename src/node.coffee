@@ -7,7 +7,7 @@ module.exports = class Node
   constructor: (@latLng) ->
     @id = _.uniqueId()
 
-  updatePathToPrev: ->
+  updateRouteFromPrev: ->
     new Promise (resolve, reject) =>
       if this.prev
         directions.route this.prev.latLng, this.latLng

@@ -53,14 +53,14 @@ module.exports = class Trail extends EventEmitter
     do @bido =>
       node.latLng = latLng
       nodes = _.compact [node, node.next]
-      Promise.all nodes.map (n) -> n.updatePathToPrev()
+      Promise.all nodes.map (n) -> n.updateRouteFromPrev()
         .then =>
           nodes.forEach (n) =>
             this.emit 'update', n
     , =>
       node.latLng = oldLatLng
       nodes = _.compact [node, node.next]
-      Promise.all nodes.map (n) -> n.updatePathToPrev()
+      Promise.all nodes.map (n) -> n.updateRouteFromPrev()
         .then =>
           nodes.forEach (n) =>
             this.emit 'update', n

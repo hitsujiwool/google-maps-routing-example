@@ -2524,7 +2524,7 @@ module.exports = Node = (function() {
     this.id = _.uniqueId();
   }
 
-  Node.prototype.updatePathToPrev = function() {
+  Node.prototype.updateRouteFromPrev = function() {
     return new Promise((function(_this) {
       return function(resolve, reject) {
         if (_this.prev) {
@@ -2682,7 +2682,7 @@ module.exports = Trail = (function(_super) {
         node.latLng = latLng;
         nodes = _.compact([node, node.next]);
         return Promise.all(nodes.map(function(n) {
-          return n.updatePathToPrev();
+          return n.updateRouteFromPrev();
         })).then(function() {
           return nodes.forEach(function(n) {
             return _this.emit('update', n);
@@ -2695,7 +2695,7 @@ module.exports = Trail = (function(_super) {
         node.latLng = oldLatLng;
         nodes = _.compact([node, node.next]);
         return Promise.all(nodes.map(function(n) {
-          return n.updatePathToPrev();
+          return n.updateRouteFromPrev();
         })).then(function() {
           return nodes.forEach(function(n) {
             return _this.emit('update', n);
