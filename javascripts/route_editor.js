@@ -2652,7 +2652,6 @@ module.exports = Trail = (function(_super) {
           return _this.emit('add', node);
         }, function() {
           _this.remove(node);
-          console.log('remove');
           return _this.emit('remove', node);
         })();
       };

@@ -37,7 +37,6 @@ module.exports = class Trail extends EventEmitter
           this.emit 'add', node
         , =>
           this.remove node
-          console.log 'remove'
           this.emit 'remove', node
 
   remove: (node) ->
