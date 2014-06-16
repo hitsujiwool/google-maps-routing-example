@@ -2526,13 +2526,9 @@ module.exports = Marker = (function() {
 
 
 },{"./directions":15}],19:[function(require,module,exports){
-var Node, Promise, directions, _;
+var Node, _;
 
 _ = require('underscore');
-
-Promise = require('es6-promise').Promise;
-
-directions = require('./directions');
 
 module.exports = Node = (function() {
   function Node(latLng) {
@@ -2540,27 +2536,12 @@ module.exports = Node = (function() {
     this.id = _.uniqueId();
   }
 
-  Node.prototype.updateRouteFromPrev = function() {
-    return new Promise((function(_this) {
-      return function(resolve, reject) {
-        if (_this.prev) {
-          return directions.route(_this.prev.latLng, _this.latLng).then(function(route) {
-            _this.routeFromPrev = route;
-            return resolve();
-          });
-        } else {
-          return resolve();
-        }
-      };
-    })(this));
-  };
-
   return Node;
 
 })();
 
 
-},{"./directions":15,"es6-promise":3,"underscore":13}],20:[function(require,module,exports){
+},{"underscore":13}],20:[function(require,module,exports){
 var Polyline, google, _;
 
 google = (window.google);
