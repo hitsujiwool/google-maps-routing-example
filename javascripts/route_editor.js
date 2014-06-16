@@ -2670,8 +2670,8 @@ module.exports = Trail = (function(_super) {
         node = new Node(path[path.length - 1]);
         node.routeFromPrev = route;
         node.prev = prevNode;
-        prevNode.next = node;
         return _this.bido(function() {
+          prevNode.next = node;
           _this.nodes.push(node);
           return _this.emit('add', node);
         }, function() {

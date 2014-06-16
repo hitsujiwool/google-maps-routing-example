@@ -37,9 +37,9 @@ module.exports = class Trail extends EventEmitter
         node = new Node(path[path.length - 1])
         node.routeFromPrev = route
         node.prev = prevNode
-        prevNode.next = node
         do @bido =>
-          @nodes.push node     
+          prevNode.next = node
+          @nodes.push node
           this.emit 'add', node
         , =>
           this.remove node
