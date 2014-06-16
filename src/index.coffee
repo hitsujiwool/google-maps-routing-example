@@ -1,3 +1,6 @@
+
+require './underscore_extension'
+
 Trail = require './trail'
 Polyline = require './polyline'
 Marker = require './marker'

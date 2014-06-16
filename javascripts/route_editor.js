@@ -2326,11 +2326,11 @@ exports.now = now;
 },{}],14:[function(require,module,exports){
 
 function isPromise(obj) {
-  return typeof obj.then === 'function';
+  return obj && typeof obj.then === 'function';
 }
 
-function call(func, cb) {
-  var res = func.call();
+function call(func, ctx, cb) {
+  var res = func.call(null, ctx);
   if (isPromise(res)) {
     res.then(cb);
   } else {
@@ -2344,12 +2344,11 @@ module.exports = function() {
   var redos = [];
 
   f.onStack = f.onUndo = f.onRedo = function() {};
-
   function f(redo, undo) {
     return function() {
       redos = [];
-      call(redo, function() {
-        undos.push({ redo: redo, undo: undo });
+      call(redo, {}, function() {
+        undos.push({ redo: redo, undo: undo, ctx: {} });
         f.onStack && f.onStack();
       });
     };
@@ -2361,7 +2360,7 @@ module.exports = function() {
 
   f.undo = function() {
     var command = undos.pop();
-    call(command.undo, function() {
+    call(command.undo, command.ctx, function() {
       redos.push(command);
       f.onUndo && f.onUndo();
     });
@@ -2373,7 +2372,7 @@ module.exports = function() {
 
   f.redo = function() {
     var command = redos.pop();
-    call(command.redo, function() {
+    call(command.redo, command.ctx, function() {
       undos.push(command);
       f.onRedo && f.onRedo();
     });
@@ -2388,15 +2387,17 @@ module.exports = function() {
 };
 
 },{}],15:[function(require,module,exports){
-var Promise, detectRoute, google, service;
+var Promise, detectRoute, google, service, _;
 
 google = (window.google);
+
+_ = require('underscore');
 
 Promise = require('es6-promise').Promise;
 
 service = new google.maps.DirectionsService();
 
-detectRoute = function(from, to, cb) {
+detectRoute = function(from, to) {
   return new Promise(function(resolve, reject) {
     return service.route({
       origin: from,
@@ -2417,12 +2418,24 @@ module.exports = {
   },
   route: function(from, to) {
     return detectRoute(from, to);
+  },
+  routes: function(wayPoints) {
+    var promises;
+    promises = [];
+    _.eachCons(wayPoints, function(els) {
+      var from, to;
+      from = els[0], to = els[1];
+      return promises.push(detectRoute(from, to));
+    }, 2);
+    return Promise.all(promises);
   }
 };
 
 
-},{"es6-promise":3}],"L7xQha":[function(require,module,exports){
+},{"es6-promise":3,"underscore":13}],"L7xQha":[function(require,module,exports){
 var Marker, Polyline, Trail, bido;
+
+require('./underscore_extension');
 
 Trail = require('./trail');
 
@@ -2447,7 +2460,7 @@ module.exports = function(map) {
 };
 
 
-},{"./bido":14,"./marker":18,"./polyline":20,"./trail":21}],"route-editor":[function(require,module,exports){
+},{"./bido":14,"./marker":18,"./polyline":20,"./trail":21,"./underscore_extension":22}],"route-editor":[function(require,module,exports){
 module.exports=require('L7xQha');
 },{}],18:[function(require,module,exports){
 var Marker, directions;
@@ -2500,6 +2513,7 @@ module.exports = Marker = (function() {
           _this.trail.replace(_this.draggingNode, latLng);
           return _this.draggingNode = null;
         })["catch"](function(e) {
+          console.error(e);
           return console.error(e.message);
         });
       };
@@ -2684,32 +2698,53 @@ module.exports = Trail = (function(_super) {
   };
 
   Trail.prototype.replace = function(node, latLng) {
-    var oldLatLng;
+    var latLngs, oldLatLng, oldRoutes, p, _ref, _ref1;
     oldLatLng = new google.maps.LatLng(node.latLng.lat(), node.latLng.lng());
+    if (this.nodes.length === 1) {
+      this.bido((function(_this) {
+        return function() {
+          node.latLng = latLng;
+          return _this.emit('update', node);
+        };
+      })(this), (function(_this) {
+        return function() {
+          node.latLng = oldLatLng;
+          return _this.emit('update', node);
+        };
+      })(this))();
+      return;
+    }
+    oldRoutes = _.compact(_.compact([node, node.next]).map(function(n) {
+      return n.routeFromPrev;
+    }));
+    latLngs = _.compact([(_ref = node.prev) != null ? _ref.latLng : void 0, latLng, (_ref1 = node.next) != null ? _ref1.latLng : void 0]);
+    p = directions.routes(latLngs);
     return this.bido((function(_this) {
       return function() {
-        var nodes;
-        node.latLng = latLng;
-        nodes = _.compact([node, node.next]);
-        return Promise.all(nodes.map(function(n) {
-          return n.updateRouteFromPrev();
-        })).then(function() {
-          return nodes.forEach(function(n) {
+        return p.then(function(routes) {
+          var nodes;
+          node.latLng = latLng;
+          nodes = node.isInitial ? [node.next] : [node, node.next];
+          _.zipWith(_.compact(nodes), routes, function(n, route) {
+            return n.routeFromPrev = route;
+          });
+          return (_.compact([node, node.next])).forEach(function(n) {
             return _this.emit('update', n);
           });
+        })["catch"](function(e) {
+          return console.error(e);
         });
       };
     })(this), (function(_this) {
       return function() {
         var nodes;
         node.latLng = oldLatLng;
-        nodes = _.compact([node, node.next]);
-        return Promise.all(nodes.map(function(n) {
-          return n.updateRouteFromPrev();
-        })).then(function() {
-          return nodes.forEach(function(n) {
-            return _this.emit('update', n);
-          });
+        nodes = node.isInitial ? [node.next] : [node, node.next];
+        _.zipWith(_.compact(nodes), oldRoutes, function(n, route) {
+          return n.routeFromPrev = route;
+        });
+        return (_.compact([node, node.next])).forEach(function(n) {
+          return _this.emit('update', n);
         });
       };
     })(this))();
@@ -2730,4 +2765,45 @@ module.exports = Trail = (function(_super) {
 })(EventEmitter);
 
 
-},{"./directions":15,"./node":19,"events":1,"underscore":13}]},{},[])
+},{"./directions":15,"./node":19,"events":1,"underscore":13}],22:[function(require,module,exports){
+var _,
+  __slice = [].slice;
+
+_ = require('underscore');
+
+_.mixin({
+  eachCons: function(list, iterator, n, context) {
+    var els, i, _i, _ref, _results;
+    if (list.length < n) {
+      throw new Error('list length must be greater than or equal to ' + n);
+    }
+    _results = [];
+    for (i = _i = 0, _ref = list.length - n; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+      els = list.slice(i, i + n);
+      _results.push(iterator.call(context, els, i, list));
+    }
+    return _results;
+  }
+});
+
+_.mixin({
+  zipWith: function() {
+    var cb, lists, numIteration, _i, _j, _results;
+    lists = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), cb = arguments[_i++];
+    numIteration = Math.min.apply(null, lists.map(function(item) {
+      return item.length;
+    }));
+    return (function() {
+      _results = [];
+      for (var _j = 0; 0 <= numIteration ? _j < numIteration : _j > numIteration; 0 <= numIteration ? _j++ : _j--){ _results.push(_j); }
+      return _results;
+    }).apply(this).map(function(n) {
+      return cb.apply(null, lists.map(function(list) {
+        return list[n];
+      }));
+    });
+  }
+});
+
+
+},{"underscore":13}]},{},[])

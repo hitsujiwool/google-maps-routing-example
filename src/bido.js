@@ -1,6 +1,6 @@
 
 function isPromise(obj) {
-  return typeof obj.then === 'function';
+  return obj && typeof obj.then === 'function';
 }
 
 function call(func, ctx, cb) {

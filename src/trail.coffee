@@ -56,20 +56,32 @@ module.exports = class Trail extends EventEmitter
 
   replace: (node, latLng) ->
     oldLatLng = new google.maps.LatLng node.latLng.lat(), node.latLng.lng()
+    if @nodes.length is 1
+      do @bido =>
+        node.latLng = latLng
+        this.emit 'update', node
+      , =>
+        node.latLng = oldLatLng
+        this.emit 'update', node
+      return
+    oldRoutes = _.compact _.compact([node, node.next]).map (n) -> n.routeFromPrev
+    latLngs = _.compact [node.prev?.latLng, latLng, node.next?.latLng]
+    p = directions.routes latLngs
     do @bido =>
-      node.latLng = latLng
-      nodes = _.compact [node, node.next]
-      Promise.all nodes.map (n) -> n.updateRouteFromPrev()
-        .then =>
-          nodes.forEach (n) =>
-            this.emit 'update', n
+      p.then (routes) =>
+        node.latLng = latLng
+        nodes = if node.isInitial then [node.next] else [node, node.next]
+        _.zipWith _.compact(nodes), routes, (n, route) =>
+          n.routeFromPrev = route
+        (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
+      .catch (e) ->
+        console.error e
     , =>
       node.latLng = oldLatLng
-      nodes = _.compact [node, node.next]
-      Promise.all nodes.map (n) -> n.updateRouteFromPrev()
-        .then =>
-          nodes.forEach (n) =>
-            this.emit 'update', n
+      nodes = if node.isInitial then [node.next] else [node, node.next]
+      _.zipWith _.compact(nodes), oldRoutes, (n, route) =>
+        n.routeFromPrev = route
+      (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
 
   calcDistance: ->
     @nodes.slice(1).reduce (sum, node) ->

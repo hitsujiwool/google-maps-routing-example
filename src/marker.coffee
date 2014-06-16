@@ -32,4 +32,5 @@ module.exports = class Marker
           @trail.replace @draggingNode, latLng
           @draggingNode = null
         .catch (e) =>
+          console.error e
           console.error e.message

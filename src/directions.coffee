@@ -1,9 +1,10 @@
 
 google = require 'google'
+_ = require 'underscore'
 Promise = require('es6-promise').Promise;
 service = new google.maps.DirectionsService()
 
-detectRoute = (from, to, cb) ->
+detectRoute = (from, to) ->
   new Promise (resolve, reject) ->
     service.route
       origin: from
@@ -21,3 +22,11 @@ module.exports =
 
   route: (from, to) ->
     detectRoute from, to
+
+  routes: (wayPoints) ->
+    promises = []
+    _.eachCons wayPoints, (els) ->
+      [from, to] = els
+      promises.push detectRoute(from, to)
+    , 2
+    Promise.all promises
