@@ -1,4 +1,3 @@
-
 google = require 'google'
 _ = require 'underscore'
 Promise = require('es6-promise').Promise;

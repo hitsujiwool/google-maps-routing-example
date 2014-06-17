@@ -1,4 +1,3 @@
-
 _ = require 'underscore'
 
 _.mixin eachCons: (list, iterator, n, context) ->

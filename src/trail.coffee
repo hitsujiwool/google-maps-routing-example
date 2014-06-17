@@ -1,4 +1,3 @@
-
 google = require 'google'
 _ = require('underscore')
 EventEmitter = require('events').EventEmitter
@@ -63,7 +62,6 @@ module.exports = class Trail extends EventEmitter
       , =>
         node.latLng = oldLatLng
         this.emit 'update', node
-      return
     oldRoutes = _.compact _.compact([node, node.next]).map (n) -> n.routeFromPrev
     latLngs = _.compact [node.prev?.latLng, latLng, node.next?.latLng]
     directions.routes latLngs
@@ -71,10 +69,8 @@ module.exports = class Trail extends EventEmitter
         @stack =>
           node.latLng = latLng
           nodes = if node.isInitial then [node.next] else [node, node.next]
-          console.log 1          
           _.zipWith _.compact(nodes), routes, (n, route) =>
             n.routeFromPrev = route
-          console.log 2            
           (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
         , =>
           node.latLng = oldLatLng
@@ -84,7 +80,7 @@ module.exports = class Trail extends EventEmitter
           (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
       .catch (e) =>
         console.error e
-  
+
   calcDistance: ->
     @nodes.slice(1).reduce (sum, node) ->
       route = node.routeFromPrev

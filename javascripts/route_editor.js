@@ -2675,7 +2675,6 @@ module.exports = Trail = (function(_super) {
           return _this.emit('update', node);
         };
       })(this));
-      return;
     }
     oldRoutes = _.compact(_.compact([node, node.next]).map(function(n) {
       return n.routeFromPrev;
@@ -2687,11 +2686,9 @@ module.exports = Trail = (function(_super) {
           var nodes;
           node.latLng = latLng;
           nodes = node.isInitial ? [node.next] : [node, node.next];
-          console.log(1);
           _.zipWith(_.compact(nodes), routes, function(n, route) {
             return n.routeFromPrev = route;
           });
-          console.log(2);
           return (_.compact([node, node.next])).forEach(function(n) {
             return _this.emit('update', n);
           });

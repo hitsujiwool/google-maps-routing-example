@@ -1,4 +1,3 @@
-
 google = require 'google'
 _ = require 'underscore'
 
@@ -24,4 +23,3 @@ module.exports = class Polyline
       return if node.isInitial
       delete path[node.id]
       line.setPath _.compose(_.flatten, _.values)(path)
-              

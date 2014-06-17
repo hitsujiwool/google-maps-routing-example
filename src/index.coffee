@@ -1,4 +1,3 @@
-
 stack = do require 'unagi'
 require './underscore_extension'
 
