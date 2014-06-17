@@ -1,49 +1,4 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-module.exports = function() {
-  var undos = [];
-  var redos = [];
-
-  f.onStack = f.onUndo = f.onRedo = function() {};
-
-  function f(redo, undo) {
-    redos = [];
-    undos.push({ redo: redo, undo: undo });
-    f.onStack(redo());
-  };
-
-  f.hasUndo = function() {
-    return undos.length > 0;
-  };
-
-  f.undo = function() {
-    var command = undos.pop();
-    if (!command) throw new Error('Nothing to undo');
-    redos.push(command);
-    f.onUndo(command.undo());
-  };
-
-  f.hasRedo = function() {
-    return redos.length > 0;
-  };
-
-  f.redo = function() {
-    var command = redos.pop();
-    if (!command) throw new Error('Nothing to redo');
-    undos.push(command);
-    f.onRedo(command.redo());
-  };
-
-  f.clear = function() {
-    undos = [];
-    redos = [];
-    return f;
-  };
-
-  return f;
-};
-
-},{}],2:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -348,7 +303,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -413,13 +368,13 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 var Promise = require("./promise/promise").Promise;
 var polyfill = require("./promise/polyfill").polyfill;
 exports.Promise = Promise;
 exports.polyfill = polyfill;
-},{"./promise/polyfill":8,"./promise/promise":9}],5:[function(require,module,exports){
+},{"./promise/polyfill":7,"./promise/promise":8}],4:[function(require,module,exports){
 "use strict";
 /* global toString */
 
@@ -513,7 +468,7 @@ function all(promises) {
 }
 
 exports.all = all;
-},{"./utils":13}],6:[function(require,module,exports){
+},{"./utils":12}],5:[function(require,module,exports){
 (function (process,global){
 "use strict";
 var browserGlobal = (typeof window !== 'undefined') ? window : {};
@@ -577,7 +532,7 @@ function asap(callback, arg) {
 
 exports.asap = asap;
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"FWaASH":3}],7:[function(require,module,exports){
+},{"FWaASH":2}],6:[function(require,module,exports){
 "use strict";
 var config = {
   instrument: false
@@ -593,7 +548,7 @@ function configure(name, value) {
 
 exports.config = config;
 exports.configure = configure;
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 (function (global){
 "use strict";
 /*global self*/
@@ -634,7 +589,7 @@ function polyfill() {
 
 exports.polyfill = polyfill;
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./promise":9,"./utils":13}],9:[function(require,module,exports){
+},{"./promise":8,"./utils":12}],8:[function(require,module,exports){
 "use strict";
 var config = require("./config").config;
 var configure = require("./config").configure;
@@ -846,7 +801,7 @@ function publishRejection(promise) {
 }
 
 exports.Promise = Promise;
-},{"./all":5,"./asap":6,"./config":7,"./race":10,"./reject":11,"./resolve":12,"./utils":13}],10:[function(require,module,exports){
+},{"./all":4,"./asap":5,"./config":6,"./race":9,"./reject":10,"./resolve":11,"./utils":12}],9:[function(require,module,exports){
 "use strict";
 /* global toString */
 var isArray = require("./utils").isArray;
@@ -936,7 +891,7 @@ function race(promises) {
 }
 
 exports.race = race;
-},{"./utils":13}],11:[function(require,module,exports){
+},{"./utils":12}],10:[function(require,module,exports){
 "use strict";
 /**
   `RSVP.reject` returns a promise that will become rejected with the passed
@@ -984,7 +939,7 @@ function reject(reason) {
 }
 
 exports.reject = reject;
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 function resolve(value) {
   /*jshint validthis:true */
@@ -1000,7 +955,7 @@ function resolve(value) {
 }
 
 exports.resolve = resolve;
-},{}],13:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 function objectOrFunction(x) {
   return isFunction(x) || (typeof x === "object" && x !== null);
@@ -1023,6 +978,51 @@ exports.objectOrFunction = objectOrFunction;
 exports.isFunction = isFunction;
 exports.isArray = isArray;
 exports.now = now;
+},{}],13:[function(require,module,exports){
+
+module.exports = function() {
+  var undos = [];
+  var redos = [];
+
+  f.onStack = f.onUndo = f.onRedo = function() {};
+
+  function f(redo, undo) {
+    redos = [];
+    undos.push({ redo: redo, undo: undo });
+    f.onStack(redo());
+  };
+
+  f.hasUndo = function() {
+    return undos.length > 0;
+  };
+
+  f.undo = function() {
+    var command = undos.pop();
+    if (!command) throw new Error('Nothing to undo');
+    redos.push(command);
+    f.onUndo(command.undo());
+  };
+
+  f.hasRedo = function() {
+    return redos.length > 0;
+  };
+
+  f.redo = function() {
+    var command = redos.pop();
+    if (!command) throw new Error('Nothing to redo');
+    undos.push(command);
+    f.onRedo(command.redo());
+  };
+
+  f.clear = function() {
+    undos = [];
+    redos = [];
+    return f;
+  };
+
+  return f;
+};
+
 },{}],14:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
@@ -2414,14 +2414,12 @@ module.exports = {
 };
 
 
-},{"es6-promise":4,"underscore":14}],"route-editor":[function(require,module,exports){
-module.exports=require('L7xQha');
-},{}],"L7xQha":[function(require,module,exports){
-var Marker, Polyline, Trail, stack;
-
-stack = require('unagi')();
+},{"es6-promise":3,"underscore":14}],"L7xQha":[function(require,module,exports){
+var Marker, Polyline, Trail, unadon;
 
 require('./underscore_extension');
+
+unadon = require('unadon');
 
 Trail = require('./trail');
 
@@ -2430,7 +2428,8 @@ Polyline = require('./polyline');
 Marker = require('./marker');
 
 module.exports = function(map) {
-  var trail;
+  var stack, trail;
+  stack = unadon();
   trail = new Trail(stack);
   new Polyline(map, trail);
   new Marker(map, trail);
@@ -2444,7 +2443,9 @@ module.exports = function(map) {
 };
 
 
-},{"./marker":18,"./polyline":20,"./trail":21,"./underscore_extension":22,"unagi":1}],18:[function(require,module,exports){
+},{"./marker":18,"./polyline":20,"./trail":21,"./underscore_extension":22,"unadon":13}],"route-editor":[function(require,module,exports){
+module.exports=require('L7xQha');
+},{}],18:[function(require,module,exports){
 var Marker, directions;
 
 directions = require('./directions');
@@ -2726,7 +2727,7 @@ module.exports = Trail = (function(_super) {
 })(EventEmitter);
 
 
-},{"./directions":15,"./node":19,"events":2,"underscore":14}],22:[function(require,module,exports){
+},{"./directions":15,"./node":19,"events":1,"underscore":14}],22:[function(require,module,exports){
 var _,
   __slice = [].slice;
 
