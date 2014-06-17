@@ -20,7 +20,8 @@
   "homepage": "https://github.com/hitsujiwool/google-maps-routing-example",
   "dependencies": {
     "underscore": "~1.6.0",
-    "es6-promise": "~1.0.0"
+    "es6-promise": "~1.0.0",
+    "unadon": "*"
   },
   "devDependencies": {
     "browserify": "~4.1.9",

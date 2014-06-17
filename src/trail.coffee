@@ -6,7 +6,7 @@ directions = require './directions'
 Node = require './node'
 
 module.exports = class Trail extends EventEmitter
-  constructor: (@bido) ->
+  constructor: (@stack) ->
     @nodes = []
     @service = new google.maps.DirectionsService()
 
@@ -21,7 +21,7 @@ module.exports = class Trail extends EventEmitter
       .then (snapped) =>
         node = new Node(snapped)
         node.isInitial = true
-        do @bido =>
+        @stack =>
           @nodes.push node
           this.emit 'start', node
         , =>
@@ -37,7 +37,7 @@ module.exports = class Trail extends EventEmitter
         node = new Node(path[path.length - 1])
         node.routeFromPrev = route
         node.prev = prevNode
-        do @bido =>
+        @stack =>
           prevNode.next = node
           @nodes.push node
           this.emit 'add', node
@@ -57,7 +57,7 @@ module.exports = class Trail extends EventEmitter
   replace: (node, latLng) ->
     oldLatLng = new google.maps.LatLng node.latLng.lat(), node.latLng.lng()
     if @nodes.length is 1
-      do @bido =>
+      @stack =>
         node.latLng = latLng
         this.emit 'update', node
       , =>
@@ -66,23 +66,25 @@ module.exports = class Trail extends EventEmitter
       return
     oldRoutes = _.compact _.compact([node, node.next]).map (n) -> n.routeFromPrev
     latLngs = _.compact [node.prev?.latLng, latLng, node.next?.latLng]
-    p = directions.routes latLngs
-    do @bido =>
-      p.then (routes) =>
-        node.latLng = latLng
-        nodes = if node.isInitial then [node.next] else [node, node.next]
-        _.zipWith _.compact(nodes), routes, (n, route) =>
-          n.routeFromPrev = route
-        (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
-      .catch (e) ->
+    directions.routes latLngs
+      .then (routes) =>
+        @stack =>
+          node.latLng = latLng
+          nodes = if node.isInitial then [node.next] else [node, node.next]
+          console.log 1          
+          _.zipWith _.compact(nodes), routes, (n, route) =>
+            n.routeFromPrev = route
+          console.log 2            
+          (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
+        , =>
+          node.latLng = oldLatLng
+          nodes = if node.isInitial then [node.next] else [node, node.next]
+          _.zipWith _.compact(nodes), oldRoutes, (n, route) =>
+            n.routeFromPrev = route
+          (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
+      .catch (e) =>
         console.error e
-    , =>
-      node.latLng = oldLatLng
-      nodes = if node.isInitial then [node.next] else [node, node.next]
-      _.zipWith _.compact(nodes), oldRoutes, (n, route) =>
-        n.routeFromPrev = route
-      (_.compact [node, node.next]).forEach (n) => this.emit 'update', n
-
+  
   calcDistance: ->
     @nodes.slice(1).reduce (sum, node) ->
       route = node.routeFromPrev

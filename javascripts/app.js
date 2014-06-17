@@ -9,7 +9,7 @@
     var map = new google.maps.Map(document.getElementById('map'), opts);
     var data = routeEditor(map);
     var trail = data.trail;
-    var bido = data.bido;
+    var stack = data.stack;
     trail
       .on('add', function() {
         document.querySelector('.distance').innerText = formatAsKm(trail.calcDistance());
@@ -21,32 +21,33 @@
         document.querySelector('.distance').innerText = formatAsKm(trail.calcDistance());
       });
     
-    bido.onStack = function() {
+    stack.onStack = function() {
+      console.log('stack');
       document.querySelector('.js-undo').classList.remove('state-disabled');      
       document.querySelector('.js-redo').classList.add('state-disabled');
     };
 
-    bido.onUndo = function() {
+    stack.onUndo = function() {
       var el = document.querySelector('.js-undo');
-      bido.hasUndo() ? el.classList.remove('state-disabled') : el.classList.add('state-disabled');
+      stack.hasUndo() ? el.classList.remove('state-disabled') : el.classList.add('state-disabled');
       document.querySelector('.js-redo').classList.remove('state-disabled');
     };
 
-    bido.onRedo = function() {
+    stack.onRedo = function() {
       var el = document.querySelector('.js-redo');
-      bido.hasRedo() ? el.classList.remove('state-disabled') : el.classList.add('state-disabled');
+      stack.hasRedo() ? el.classList.remove('state-disabled') : el.classList.add('state-disabled');
       document.querySelector('.js-undo').classList.remove('state-disabled');
     };
 
     document.querySelector('.js-undo').addEventListener('click', function() {
       if (this.classList.contains('state-disabled')) return;
       this.classList.add('state-disabled');
-      bido.undo();
+      stack.undo();
     });
     document.querySelector('.js-redo').addEventListener('click', function() {
       if (this.classList.contains('state-disabled')) return;
       this.classList.add('state-disabled');
-      bido.redo();
+      stack.redo();
     });
   });
 
